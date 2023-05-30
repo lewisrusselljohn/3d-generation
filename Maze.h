@@ -2,11 +2,13 @@
 
 #include <glew.h>
 #include <stdio.h>
+#include <vector>
 
 class Maze
 {
 private:
 	struct v2 { float x; float y; };
+    struct pair { GLuint p1; GLuint p2; };
 	int rows;
 	int columns;
 	v2** points;
@@ -15,7 +17,9 @@ private:
     GLuint vao;
     GLuint vbo;
     GLuint ebo;
+    GLuint ebo_size;
     GLuint vertex_count;
+
 
     // Vertex shader source code
     const char* vertexShaderSource = R"(
