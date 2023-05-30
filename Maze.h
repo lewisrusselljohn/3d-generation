@@ -3,6 +3,8 @@
 #include <glew.h>
 #include <stdio.h>
 #include <vector>
+#include <stdlib.h>
+#include <time.h>
 
 class Maze
 {
@@ -11,7 +13,7 @@ private:
 	int columns;
 
 
-    GLuint vao;
+    GLuint ver_vao, hor_vao;
 
     GLuint hor_vbo;
     GLuint hor_vbo_size;
@@ -46,5 +48,7 @@ private:
 public:
 	Maze(int, int);
 	~Maze();
+    void CreateGrid();
+    void CreateMaze();
     void DrawArrays();
 };
