@@ -88,7 +88,12 @@ void Maze::CreateGrid()
 	glEnableVertexAttribArray(0);
 }
 
-/* For a start, a very horizontal maze*/
+/* For a start, a very horizontal maze.
+	I could improve this further by repeating the number of times a vertical line and 2 horizontal lines
+	are removed in a row, based on how long the rows are. As it is right now, very long rows tend to have
+	very long hallways which are dead ends.
+	You could creatively use these long hallways in the game or otherwise just make something that is more complex.
+*/
 void Maze::CreateMaze()
 {
 	float start_x = -0.5f;
