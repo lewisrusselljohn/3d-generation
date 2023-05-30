@@ -18,9 +18,7 @@ Maze::Maze(int r, int c) : rows(r), columns(c)
 		{
 			points[row][column].x = -0.5f + column*(1.0f/columns);
 			points[row][column].y = -0.5f + row*(1.0f/rows);
-			printf("{ %f, %f }", points[row][column].x, points[row][column].y);
 		}
-		printf("\n");
 	}
 
 	// flatten the points into vertex data to be passed to GPU
@@ -36,20 +34,71 @@ Maze::Maze(int r, int c) : rows(r), columns(c)
 		}
 	}
 
-	for (int i = 0; i < (rows + 1) * (columns + 1) * 3; i++)
-		printf(" %f \n", vertices[i]);
-
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+	// Pass the vertex data to the GPU VBO
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertex_count*3, vertices, GL_STATIC_DRAW);
 
 	// Set vertex attribute pointers
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
+
+	// Setup the Element Buffer Object
+
+	glGenBuffers(1, &ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+
+
+	std::vector<GLuint> ind;
+
+
+	// Generate indices for lines from the center of the cells
+	for (int row = 0; row < rows; ++row) {
+		for (int column = 0; column < columns; ++column) {
+			int topLeft = row * (columns + 1) + column;
+			int topRight = topLeft + 1;
+			int bottomLeft = (row + 1) * (columns + 1) + column;
+			int bottomRight = bottomLeft + 1;
+
+			// Add indices to draw horizontal line
+			ind.push_back(topLeft);
+			ind.push_back(topRight);
+			ind.push_back(topRight);
+			ind.push_back(bottomRight);
+		}
+	}
+
+	for (int column = 0; column < columns; ++column) {
+		for (int row = 0; row < rows; ++row) {
+			int topLeft = row * (columns + 1) + column;
+			int topRight = topLeft + 1;
+			int bottomLeft = (row + 1) * (columns + 1) + column;
+			int bottomRight = bottomLeft + 1;
+
+			// Add indices to draw vertical line
+			ind.push_back(topLeft);
+			ind.push_back(bottomLeft);
+			ind.push_back(bottomLeft);
+			ind.push_back(bottomRight);
+		}
+	}
+
+	GLuint* indata = ind.data();
+
+	ebo_size = ind.size();
+
+
+	/*
+		For a maze, an algorithm is required to delete cell walls, which
+		means to remove a pair from the indices array.
+	*/
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_size*sizeof(GLuint), indata, GL_STATIC_DRAW);
+
 }
 
 Maze::~Maze()
@@ -64,6 +113,7 @@ Maze::~Maze()
 void Maze::Draw()
 {
 	glBindVertexArray(vao);
-	glDrawArrays(GL_LINES, 0, vertex_count);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glDrawElements(GL_LINES, ebo_size, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
