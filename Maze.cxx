@@ -47,8 +47,9 @@ Maze::Maze(int r, int c) : rows(r), columns(c)
 	GLfloat* hor_vert_data = hor_verts.data();
 	hor_vbo_size = hor_verts.size();
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	// Setup horizontal vao
+	glGenVertexArrays(1, &hor_vao);
+	glBindVertexArray(hor_vao);
 
 	glGenBuffers(1, &hor_vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, hor_vbo);
@@ -59,7 +60,10 @@ Maze::Maze(int r, int c) : rows(r), columns(c)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
-	// Setup vertical vbo
+	// Setup vertical vao
+	glGenVertexArrays(1, &ver_vao);
+	glBindVertexArray(ver_vao);
+
 	GLfloat* ver_vert_data = ver_verts.data();
 	ver_vbo_size = ver_verts.size();
 
@@ -79,8 +83,14 @@ Maze::~Maze()
 
 void Maze::DrawArrays()
 {
-	glBindVertexArray(vao);
-	glBindBuffer(GL_ARRAY_BUFFER, ver_vbo);
+
+	// Bind and draw vertical VAO
+	glBindVertexArray(ver_vao);
 	glDrawArrays(GL_LINES, 0, ver_vbo_size);
+
+	// Bind and draw horizontal VAO
+	glBindVertexArray(hor_vao);
+	glDrawArrays(GL_LINES, 0, hor_vbo_size);
+
 	glBindVertexArray(0);
 }
