@@ -7,20 +7,19 @@
 class Maze
 {
 private:
-	struct v2 { float x; float y; };
-    struct pair { GLuint p1; GLuint p2; };
 	int rows;
 	int columns;
-	v2** points;
-    GLfloat* vertices;
+
 
     GLuint vao;
-    GLuint vbo;
-    GLuint ebo;
-    GLuint ebo_size;
-    GLuint vertex_count;
 
+    GLuint hor_vbo;
+    GLuint hor_vbo_size;
 
+    GLuint ver_vbo;
+    GLuint ver_vbo_size;
+
+    // Shaders unused at the moment.
     // Vertex shader source code
     const char* vertexShaderSource = R"(
     #version 330 core
@@ -47,5 +46,5 @@ private:
 public:
 	Maze(int, int);
 	~Maze();
-    void Draw();
+    void DrawArrays();
 };
