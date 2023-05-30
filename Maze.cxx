@@ -2,118 +2,85 @@
 
 Maze::Maze(int r, int c) : rows(r), columns(c)
 {
-	/*
-		There are r by c cells but 1 is added to count all of
-		the corners for each cell
-	*/
-	points = new v2* [rows+1];
-	for (int i = 0; i < rows+1; i++)
-	{
-		points[i] = new v2[columns+1];
-	}
+	float start_x = -0.5f;
+	float start_y = -0.5f;
 
-	for (int row = 0; row < rows + 1; row++)
+	std::vector<GLfloat> hor_verts;
+	std::vector<GLfloat> ver_verts;
+
+	for (int row = 0; row <= rows; row++)
 	{
-		for (int column = 0; column < columns + 1; column++)
+		for (int column = 0; column <= columns; column++)
 		{
-			points[row][column].x = -0.5f + column*(1.0f/columns);
-			points[row][column].y = -0.5f + row*(1.0f/rows);
+
+
+			float x = start_x + (1.0f / columns)*column;
+			float y = start_y + (1.0f / rows)*row;
+			float z = 0.0f;
+			float x2 = start_x + (1.0f / columns) * (column+1);
+			float y2 = start_y + (1.0f / rows) * (row+1);
+
+			if (column != columns)
+			{
+				hor_verts.push_back(x);
+				hor_verts.push_back(y);
+				hor_verts.push_back(z);
+
+				hor_verts.push_back(x2);
+				hor_verts.push_back(y);
+				hor_verts.push_back(z);
+			}
+
+			if (row != rows)
+			{
+				ver_verts.push_back(x);
+				ver_verts.push_back(y);
+				ver_verts.push_back(z);
+
+				ver_verts.push_back(x);
+				ver_verts.push_back(y2);
+				ver_verts.push_back(z);
+			}
 		}
 	}
 
-	// flatten the points into vertex data to be passed to GPU
-	vertices = new float[(rows + 1) * (columns + 1) * 3];
-	vertex_count = (rows + 1) * (columns + 1);
-	int index = 0;
-	for (int i = 0; i < rows+1; ++i) {
-		for (int j = 0; j < columns+1; ++j) {
-			vertices[index] = points[i][j].x;
-			vertices[index + 1] = points[i][j].y;
-			vertices[index + 2] = 0.0f;
-			index+=3;
-		}
-	}
+	GLfloat* hor_vert_data = hor_verts.data();
+	hor_vbo_size = hor_verts.size();
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glGenBuffers(1, &hor_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, hor_vbo);
+	
+	//Pass the vertex data to the GPU VBO
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat)*hor_vbo_size, hor_vert_data, GL_STATIC_DRAW);
 
-	// Pass the vertex data to the GPU VBO
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*vertex_count*3, vertices, GL_STATIC_DRAW);
-
-	// Set vertex attribute pointers
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
 
-	// Setup the Element Buffer Object
+	// Setup vertical vbo
+	GLfloat* ver_vert_data = ver_verts.data();
+	ver_vbo_size = ver_verts.size();
 
-	glGenBuffers(1, &ebo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+	glGenBuffers(1, &ver_vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, ver_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * ver_vbo_size, ver_vert_data, GL_STATIC_DRAW);
 
-
-
-	std::vector<GLuint> ind;
-
-
-	// Generate indices for lines from the center of the cells
-	for (int row = 0; row < rows; ++row) {
-		for (int column = 0; column < columns; ++column) {
-			int topLeft = row * (columns + 1) + column;
-			int topRight = topLeft + 1;
-			int bottomLeft = (row + 1) * (columns + 1) + column;
-			int bottomRight = bottomLeft + 1;
-
-			// Add indices to draw horizontal line
-			ind.push_back(topLeft);
-			ind.push_back(topRight);
-			ind.push_back(topRight);
-			ind.push_back(bottomRight);
-		}
-	}
-
-	for (int column = 0; column < columns; ++column) {
-		for (int row = 0; row < rows; ++row) {
-			int topLeft = row * (columns + 1) + column;
-			int topRight = topLeft + 1;
-			int bottomLeft = (row + 1) * (columns + 1) + column;
-			int bottomRight = bottomLeft + 1;
-
-			// Add indices to draw vertical line
-			ind.push_back(topLeft);
-			ind.push_back(bottomLeft);
-			ind.push_back(bottomLeft);
-			ind.push_back(bottomRight);
-		}
-	}
-
-	GLuint* indata = ind.data();
-
-	ebo_size = ind.size();
-
-
-	/*
-		For a maze, an algorithm is required to delete cell walls, which
-		means to remove a pair from the indices array.
-	*/
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, ebo_size*sizeof(GLuint), indata, GL_STATIC_DRAW);
-
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
 }
+
 
 Maze::~Maze()
 {
-	// Deallocate 2d array points memory
-	for (int i = 0; i < rows; i++)
-		delete[] points[i];
-	delete[] points;
-	delete[] vertices;
+
 }
 
-void Maze::Draw()
+void Maze::DrawArrays()
 {
 	glBindVertexArray(vao);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-	glDrawElements(GL_LINES, ebo_size, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ARRAY_BUFFER, ver_vbo);
+	glDrawArrays(GL_LINES, 0, ver_vbo_size);
 	glBindVertexArray(0);
 }
